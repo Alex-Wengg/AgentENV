@@ -66,6 +66,8 @@ The process contains one global `NetworkManager` and one global `EgressProxy` re
 
 The namespace adds a default route through `veth_host_ip`. Firecracker receives an `ip=` boot argument containing the VM address, TAP link, netmask, and the guest DNS server selected from the host resolver configuration.
 
+Cold boots also append `sysctl.net.ipv4.conf.all.arp_notify=1`. The guest NIC has no configured MAC, and guest userspace may change it after boot (for example systemd-udevd's `MACAddressPolicy=persistent` rewrites the random boot MAC). With `arp_notify` the guest kernel sends a gratuitous ARP on each change, so the namespace's `tap0` neighbour entry for `vm_ip` follows the new MAC instead of going stale. The argument is appended in code, so it also applies when `firecracker.boot_args` is overridden.
+
 The complete internal pools are denied before user egress rules. This prevents a sandbox from reaching another slot's host-interaction address, veth link, or VM link even when a user policy otherwise allows the destination.
 
 ## Namespace Setup

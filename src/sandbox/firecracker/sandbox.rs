@@ -57,6 +57,9 @@ use crate::types::{
 const VM_STATE_FILE_NAME: &str = "vm_state.bin";
 const ROOTFS_DRIVE_PATH: &str = "rootfs.ext4";
 const USER_ROOTFS_DRIVE_PATH: &str = "user-rootfs";
+/// Guest userspace (e.g. systemd-udevd's `MACAddressPolicy=`) may change eth0's
+/// MAC after boot; without a gratuitous ARP the tap0 neighbour entry goes stale.
+const GUEST_ARP_NOTIFY_BOOT_ARG: &str = "sysctl.net.ipv4.conf.all.arp_notify=1";
 
 /// Firecracker's `TokenBucket::size` is the number of tokens replenished every
 /// `refill_time`, not a per-second rate. Pinning the refill period to 1000 ms
@@ -1546,6 +1549,7 @@ impl FirecrackerSandbox {
         // Uses Slot::build_ip_boot_arg() to produce the kernel ip= parameter with a
         // valid DNS server IP in the 8th field. See that method for format details.
         append_boot_arg(&mut boot_args, &slot.build_ip_boot_arg());
+        append_boot_arg(&mut boot_args, GUEST_ARP_NOTIFY_BOOT_ARG);
 
         // ── Custom extension hook: start-fresh (may contribute extra boot args) ──
         if let Some(client) = CustomExtensionClient::global() {
