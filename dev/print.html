@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-34f23f9e.js";
+            window.path_to_searchindex_js = "searchindex-4cd78a8b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-d7504e7d.js"></script>
@@ -4823,6 +4823,7 @@ This page explains how that contract is implemented.</p>
 <li><code>vm_ip</code> and <code>tap_ip</code>: fixed endpoints of the VM link on <code>vm_link_cidr</code>. The VM receives <code>vm_ip</code>; the namespace TAP interface receives <code>tap_ip</code>.</li>
 </ul>
 <p>The namespace adds a default route through <code>veth_host_ip</code>. Firecracker receives an <code>ip=</code> boot argument containing the VM address, TAP link, netmask, and the guest DNS server selected from the host resolver configuration.</p>
+<p>Cold boots also append <code>sysctl.net.ipv4.conf.all.arp_notify=1</code>. The guest NIC has no configured MAC, and guest userspace may change it after boot (for example systemd-udevd’s <code>MACAddressPolicy=persistent</code> rewrites the random boot MAC). With <code>arp_notify</code> the guest kernel sends a gratuitous ARP on each change, so the namespace’s <code>tap0</code> neighbour entry for <code>vm_ip</code> follows the new MAC instead of going stale. The argument is appended in code, so it also applies when <code>firecracker.boot_args</code> is overridden.</p>
 <p>The complete internal pools are denied before user egress rules. This prevents a sandbox from reaching another slot’s host-interaction address, veth link, or VM link even when a user policy otherwise allows the destination.</p>
 <h2 id="namespace-setup"><a class="header" href="#namespace-setup">Namespace Setup</a></h2>
 <p><code>Slot::create_network()</code> performs namespace setup on a dedicated thread because network namespace membership is thread-local:</p>
